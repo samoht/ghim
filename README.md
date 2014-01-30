@@ -8,7 +8,8 @@ can then grep, modify, pull/push etc.
 
 ### Build
 
-You will need [ocaml-github]() and [cmdliner]().
+You will need [ocaml-github](https://github.com/avsm/ocaml-github)
+ and [cmdliner](https://github.com/dbuenzli/cmdliner).
 
 You can then just run:
 ```shell
