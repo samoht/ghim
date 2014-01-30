@@ -1,0 +1,15 @@
+OASISFormat: 0.3
+Name:        ghim
+Version:     0.1.0
+Synopsis:    A command-line tool to interact with Github
+Authors:     Thomas Gazagnaire
+License:     ISC
+Plugins:     META (0.3), DevFiles (0.3)
+BuildTools:  ocamlbuild
+
+Executable ghim
+  Path:               lib/
+  MainIs:             main.ml
+  CompiledObject:     best
+  Install:            true
+  BuildDepends:       cmdliner, git.unix, github.unix, irminsule.backend.git
