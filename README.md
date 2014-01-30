@@ -22,14 +22,14 @@ make install
 ```shell
 ~/git/ghim$ ghim list mirage mirage
 48 issues found.
-mirage/mirage#205: too little logging output when invoking `opam install`
-mirage/mirage#204: clean is too aggressive
-mirage/mirage#203: V2 improvements:
-mirage/mirage#202: apparently odd set of dependencies triggering opam behaviour
-mirage/mirage#201: Integrate @mor1 patch to fix the mode selection
-mirage/mirage#200: V2: Need a write function in the console signature
-mirage/mirage#199: Unify the mirage-types and mirage repositories
-mirage/mirage#198: mirage-console is missing a Travis
-mirage/mirage#193: Testing: packet generation using Ostinato
+mirage/mirage #205    too little logging output when invoking `opam install`
+mirage/mirage #204    clean is too aggressive
+mirage/mirage #203    V2 improvements:
+mirage/mirage #202    apparently odd set of dependencies triggering opam behaviour
+mirage/mirage #201    Integrate @mor1 patch to fix the mode selection
+mirage/mirage #200    V2: Need a write function in the console signature
+mirage/mirage #199    Unify the mirage-types and mirage repositories
+mirage/mirage #198    mirage-console is missing a Travis
+mirage/mirage #193    Testing: packet generation using Ostinato
 [...]
 ```
