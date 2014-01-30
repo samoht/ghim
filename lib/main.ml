@@ -121,15 +121,6 @@ let list = {
   man  = [];
   term =
 
-    let list ~user ~repo issues =
-      let open Github.Monad in
-      let open Github_t in
-      printf "%d issues found.\n%!" (List.length issues);
-      List.iter (fun issue ->
-          printf "%s/%s#%d: %s\n%!" user repo issue.issue_number issue.issue_title
-        ) issues;
-      return () in
-
     let rec auth jar token pass =
       match jar, token, pass with
       | Some j, None, None ->
@@ -149,8 +140,10 @@ let list = {
 
     let list jar token pass user repo =
       run begin
-        auth jar token pass >>= fun token ->
-        Issues.iter ~token ~user ~repo ~fn:(list ~user ~repo);
+        auth jar token pass           >>= fun token ->
+        Issues.all ~token ~user ~repo >>= fun issues ->
+        Issues.pretty ~user ~repo issues;
+        return_unit
       end in
     Term.(mk list $ jar $ token $ password $ user $ repository)
 }

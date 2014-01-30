@@ -14,10 +14,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
+let bold fmt = Printf.sprintf ("\027[01m"^^fmt^^"\027[m")
+let red fmt = Printf.sprintf ("\027[31m"^^fmt^^"\027[m")
+let green fmt = Printf.sprintf ("\027[32m"^^fmt^^"\027[m")
+let yellow fmt = Printf.sprintf ("\027[33m"^^fmt^^"\027[m")
+let blue fmt = Printf.sprintf ("\027[36m"^^fmt^^"\027[m")
+
 open Lwt
 open Printf
 
-let iter ~fn ~token ~user ~repo =
+type t = Github_t.issue
+
+let all ~token ~user ~repo =
   let open Github.Monad in
   let open Github_t in
 
@@ -37,6 +45,15 @@ let iter ~fn ~token ~user ~repo =
         (fun i1 i2 -> compare i2.issue_number i1.issue_number)
         (none @ all) in
 
-    fn issues
-
+    return issues
   )
+
+let pretty ~user ~repo issues =
+  let open Github_t in
+  printf "%s issues found.\n%!" (bold "%d" (List.length issues));
+  List.iter (fun issue ->
+      printf "%s %-12s    %s\n%!"
+        (bold "%s/%s" user repo)
+        (blue "#%d" issue.issue_number)
+        issue.issue_title
+    ) issues
