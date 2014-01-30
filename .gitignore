@@ -1,0 +1,5 @@
+_build/
+*~
+setup.log
+setup.data
+*.native
