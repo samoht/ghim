@@ -57,16 +57,10 @@ let global =
     | _          -> { level = None } in
   Term.(pure level $ debug $ verbose)
 
-let user =
-  let doc = Arg.info ~docv:"USER"
-      ~doc:"The name of the user who host the repository." [] in
-  Arg.(required & pos 0 (some string) None & doc)
-
 let repository =
-  let doc = Arg.info ~docv:"REPOSITORY"
+  let doc = Arg.info ~docv:"USER/REPOSITORY"
       ~doc:"The repository name." [] in
-  Arg.(required & pos 1 (some string) None & doc)
-
+  Arg.(required & pos 0 (some string) None & doc)
 
 let jar =
   let doc = Arg.info ~docv:"JAR"
@@ -138,14 +132,21 @@ let list = {
         failwith "Invalid credentials. You should provide: $(b,-p login:password:id)"
       | _ -> auth (Some "local") None None in
 
-    let list jar token pass user repo =
+    let list jar token pass repo =
+      let user, repo =
+        try
+          let i = String.index repo '/' in
+          String.sub repo 0 i,
+          String.sub repo (i+1) (String.length repo - i - 1)
+        with Not_found ->
+          repo, repo in
       run begin
         auth jar token pass           >>= fun token ->
         Issue.all ~token ~user ~repo >>= fun issues ->
         Issue.pretty issues;
         return_unit
       end in
-    Term.(mk list $ jar $ token $ password $ user $ repository)
+    Term.(mk list $ jar $ token $ password $ repository)
 }
 
 let default =
