@@ -141,8 +141,8 @@ let list = {
     let list jar token pass user repo =
       run begin
         auth jar token pass           >>= fun token ->
-        Issues.all ~token ~user ~repo >>= fun issues ->
-        Issues.pretty ~user ~repo issues;
+        Issue.all ~token ~user ~repo >>= fun issues ->
+        Issue.pretty issues;
         return_unit
       end in
     Term.(mk list $ jar $ token $ password $ user $ repository)

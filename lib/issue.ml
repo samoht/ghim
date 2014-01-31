@@ -23,7 +23,11 @@ let blue fmt = Printf.sprintf ("\027[36m"^^fmt^^"\027[m")
 open Lwt
 open Printf
 
-type t = Github_t.issue
+type t = {
+  user: string;
+  repo: string;
+  issue: Github_t.issue;
+}
 
 let all ~token ~user ~repo =
   let open Github.Monad in
@@ -44,16 +48,18 @@ let all ~token ~user ~repo =
     let issues = List.sort
         (fun i1 i2 -> compare i2.issue_number i1.issue_number)
         (none @ all) in
-
+    let issues = List.map (fun issue ->
+        { repo; user; issue }
+      ) issues in
     return issues
   )
 
-let pretty ~user ~repo issues =
+let pretty issues =
   let open Github_t in
-  printf "%s issues found.\n%!" (bold "%d" (List.length issues));
-  List.iter (fun issue ->
-      printf "%s %-12s    %s\n%!"
-        (bold "%s/%s" user repo)
-        (blue "#%d" issue.issue_number)
-        issue.issue_title
+  printf "%s open issues found.\n%!" (bold "%d" (List.length issues));
+  List.iter (fun t ->
+      printf "%s %-13s  %s\n%!"
+        (bold "%s/%s" t.user t.repo)
+        (blue "#%d" t.issue.issue_number)
+        t.issue.issue_title
     ) issues
