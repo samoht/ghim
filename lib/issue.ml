@@ -22,16 +22,17 @@ let blue fmt = Printf.sprintf ("\027[36m"^^fmt^^"\027[m")
 
 open Lwt
 open Printf
+open Github_t
 
 type t = {
   user: string;
   repo: string;
   issue: Github_t.issue;
+  token: Github.Token.t;
 }
 
 let all ~token ~user ~repo =
   let open Github.Monad in
-  let open Github_t in
 
   run (
 
@@ -49,17 +50,59 @@ let all ~token ~user ~repo =
         (fun i1 i2 -> compare i2.issue_number i1.issue_number)
         (none @ all) in
     let issues = List.map (fun issue ->
-        { repo; user; issue }
+        { repo; user; issue; token }
       ) issues in
     return issues
   )
 
 let pretty issues =
-  let open Github_t in
   printf "%s open issues found.\n%!" (bold "%d" (List.length issues));
   List.iter (fun t ->
       printf "%s %-13s  %s\n%!"
         (bold "%s/%s" t.user t.repo)
         (blue "#%d" t.issue.issue_number)
         t.issue.issue_title
+    ) issues;
+  return_unit
+
+let (/) = Filename.concat
+
+let comments { token; user; repo; issue = { issue_number } } =
+  Github.Monad.run
+    (Github.Issue.comments ~token ~user ~repo ~issue_number ())
+
+let string_of_state = function
+  | `Open   -> "open"
+  | `Closed -> "closed"
+
+let mkdir dirname =
+  let rec aux dir =
+    if not (Sys.file_exists dir) then (
+      aux (Filename.dirname dir);
+      Unix.mkdir dir 0o755
+    ) in
+  aux dirname
+
+let expand issues =
+  printf "%s open issues found, cloning.\n%!" (bold "%d" (List.length issues));
+  Lwt_list.iter_p (fun t ->
+      comments t >>= fun comments ->
+      let files = [
+        "title", t.issue.issue_title;
+        "body" , t.issue.issue_body;
+        "state", string_of_state t.issue.issue_state;
+      ] @ List.map (fun c ->
+          "comments" / string_of_int c.issue_comment_id, c.issue_comment_body
+        ) comments
+      in
+      let prefix = t.user / t.repo / string_of_int t.issue.issue_number in
+      List.iter (fun (file, contents) ->
+          let file = prefix / file in
+          mkdir (Filename.dirname file);
+          let oc = open_out file in
+          output_string oc contents;
+          output_char oc '\n';
+          close_out oc
+        ) files;
+      return_unit;
     ) issues

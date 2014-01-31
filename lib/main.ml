@@ -57,10 +57,24 @@ let global =
     | _          -> { level = None } in
   Term.(pure level $ debug $ verbose)
 
+let repo_conv =
+  let parse str =
+    try
+      let i = String.index str '/' in
+      let user = String.sub str 0 i in
+      let repo = String.sub str (i+1) (String.length str - i - 1) in
+      `Ok (user, repo)
+    with Not_found ->
+      `Ok (str, str) in
+  let print ppf (user, repo) =
+    Format.pp_print_string ppf (user ^ "/" ^ repo) in
+  parse, print
+
 let repository =
   let doc = Arg.info ~docv:"USER/REPOSITORY"
-      ~doc:"The repository name." [] in
-  Arg.(required & pos 0 (some string) None & doc)
+      ~doc:"The repository location, corresponding to \
+            https://github.com/USER/REPOSITORY." [] in
+  Arg.(required & pos 0 (some repo_conv) None & doc)
 
 let jar =
   let doc = Arg.info ~docv:"JAR"
@@ -107,6 +121,22 @@ let create_command c =
   ] @ c.man in
   c.term, term_info c.name ~doc:c.doc ~man
 
+let rec auth jar token pass =
+  match jar, token, pass with
+  | Some j, None, None ->
+    begin Github_cookie_jar.init () >>= fun t ->
+      Github_cookie_jar.get t ~name:j >>= function
+      | None       -> fail (Failure (j ^ ": unknown jar."))
+      | Some oauth -> return (Github.Token.of_auth oauth)
+    end
+  | None, Some t, None ->
+    return (Github.Token.of_string t)
+  | None, None, Some [u; p; i] ->
+    Github.Monad.run (Github.Token.get ~user:u ~pass:p ~id:(int_of_string i) ()) >>= fun a ->
+    return (Github.Token.of_auth a)
+  | None, None, Some _ ->
+    failwith "Invalid credentials. You should provide: $(b,-p login:password:id)"
+  | _ -> auth (Some "local") None None
 
 (* LIST *)
 let list = {
@@ -114,39 +144,28 @@ let list = {
   doc  = "List of the open issues in a given repository.";
   man  = [];
   term =
-
-    let rec auth jar token pass =
-      match jar, token, pass with
-      | Some j, None, None ->
-        begin Github_cookie_jar.init () >>= fun t ->
-          Github_cookie_jar.get t ~name:j >>= function
-          | None       -> fail (Failure (j ^ ": unknown jar."))
-          | Some oauth -> return (Github.Token.of_auth oauth)
-        end
-      | None, Some t, None ->
-        return (Github.Token.of_string t)
-      | None, None, Some [u; p; i] ->
-        Github.Monad.run (Github.Token.get ~user:u ~pass:p ~id:(int_of_string i) ()) >>= fun a ->
-        return (Github.Token.of_auth a)
-      | None, None, Some _ ->
-        failwith "Invalid credentials. You should provide: $(b,-p login:password:id)"
-      | _ -> auth (Some "local") None None in
-
-    let list jar token pass repo =
-      let user, repo =
-        try
-          let i = String.index repo '/' in
-          String.sub repo 0 i,
-          String.sub repo (i+1) (String.length repo - i - 1)
-        with Not_found ->
-          repo, repo in
+    let list jar token pass (user, repo) =
       run begin
-        auth jar token pass           >>= fun token ->
+        auth jar token pass          >>= fun token ->
         Issue.all ~token ~user ~repo >>= fun issues ->
-        Issue.pretty issues;
-        return_unit
+        Issue.pretty issues
       end in
     Term.(mk list $ jar $ token $ password $ repository)
+}
+
+(* CLONE *)
+let clone = {
+  name = "clone";
+  doc  = "Clone the open issues in a given repository to the local filesystem.";
+  man  = [];
+  term =
+    let clone jar token pass (user, repo) =
+      run begin
+        auth jar token pass          >>= fun token ->
+        Issue.all ~token ~user ~repo >>= fun issues ->
+        Issue.expand issues
+      end in
+    Term.(mk clone $ jar $ token $ password $ repository)
 }
 
 let default =
@@ -166,9 +185,10 @@ let default =
       \n\
       The most commonly used irminsule commands are:\n\
       \    list        %s\n\
+      \    clone       %s\n\
       \n\
       See `irmin help <command>` for more information on a specific command.\n%!"
-      list.doc in
+      list.doc clone.doc in
   Term.(pure usage $ global),
   Term.info "irmin"
     ~version:"0.1"
@@ -178,6 +198,7 @@ let default =
 
 let commands = List.map create_command [
   list;
+  clone;
   ]
 
 let () =

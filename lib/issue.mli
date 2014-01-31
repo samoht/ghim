@@ -18,4 +18,6 @@ type t
 
 val all: token:Github.Token.t -> user:string -> repo:string -> t list Lwt.t
 
-val pretty: t list -> unit
+val pretty: t list -> unit Lwt.t
+
+val expand: t list -> unit Lwt.t
