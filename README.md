@@ -20,7 +20,7 @@ make install
 ### Examples
 
 ```shell
-~/git/ghim$ ghim list mirage mirage
+~/git/ghim$ ghim list mirage
 48 issues found.
 mirage/mirage #205    too little logging output when invoking `opam install`
 mirage/mirage #204    clean is too aggressive
