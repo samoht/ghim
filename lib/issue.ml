@@ -31,28 +31,51 @@ type t = {
   token: Github.Token.t;
 }
 
-let all ~token ~user ~repo =
+let string_of_state = function
+  | `Open   -> "open"
+  | `Closed -> "closed"
+
+let list ~token ~user ~repo ~all =
   let open Github.Monad in
 
   run (
 
-    let rec read milestone issues page =
-      Github.Issue.for_repo ~page ~token ~user ~repo ~milestone () >>= fun l ->
-      if List.length l = 0 then
-        return issues
-      else
-        read milestone (l @ issues) (page+1) in
+    let rec read milestone issues page state =
+      printf "\rReading %s issues of %s/%s: page %d.%!"
+        (string_of_state state) user repo page;
 
-    read `None [] 1 >>= fun none ->
-    read `Any [] 1  >>= fun all  ->
+      Github.Issue.for_repo ~page ~token ~user ~repo ~milestone ~state ()
+      >>= fun l ->
+      if List.length l = 0 then (
+        print_newline ();
+        return issues
+      ) else
+        read milestone (l @ issues) (page+1) state in
+
+    begin
+
+      if all then (
+        read `None [] 1 `Closed >>= fun none ->
+        read `Any  [] 1 `Closed >>= fun all  ->
+        return (none @ all)
+      ) else
+        return []
+
+    end >>= fun closed ->
+
+    read `None [] 1 `Open >>= fun none ->
+    read `Any  [] 1 `Open >>= fun all  ->
 
     let issues = List.sort
         (fun i1 i2 -> compare i2.issue_number i1.issue_number)
-        (none @ all) in
+        (none @ all @ closed) in
+
     let issues = List.map (fun issue ->
         { repo; user; issue; token }
       ) issues in
+
     return issues
+
   )
 
 let pretty issues =
@@ -71,10 +94,6 @@ let comments { token; user; repo; issue = { issue_number } } =
   Github.Monad.run
     (Github.Issue.comments ~token ~user ~repo ~issue_number ())
 
-let string_of_state = function
-  | `Open   -> "open"
-  | `Closed -> "closed"
-
 let mkdir dirname =
   let rec aux dir =
     if not (Sys.file_exists dir) then (
@@ -85,7 +104,7 @@ let mkdir dirname =
 
 let expand issues =
   printf "%s open issues found, cloning.\n%!" (bold "%d" (List.length issues));
-  Lwt_list.iter_p (fun t ->
+  Lwt_list.iter_s (fun t ->
       comments t >>= fun comments ->
       let files = [
         "title", t.issue.issue_title;
@@ -102,6 +121,7 @@ let expand issues =
           let oc = open_out file in
           output_string oc contents;
           output_char oc '\n';
+          flush oc;
           close_out oc
         ) files;
       return_unit;

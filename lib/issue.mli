@@ -16,7 +16,7 @@
 
 type t
 
-val all: token:Github.Token.t -> user:string -> repo:string -> t list Lwt.t
+val list: token:Github.Token.t -> user:string -> repo:string -> all:bool -> t list Lwt.t
 
 val pretty: t list -> unit Lwt.t
 

@@ -138,19 +138,23 @@ let rec auth jar token pass =
     failwith "Invalid credentials. You should provide: $(b,-p login:password:id)"
   | _ -> auth (Some "local") None None
 
+let all =
+  let doc = Arg.info ~doc:"Consider also the closed issues." ["all";"a"] in
+  Arg.(value & flag & doc)
+
 (* LIST *)
 let list = {
   name = "list";
   doc  = "List of the open issues in a given repository.";
   man  = [];
   term =
-    let list jar token pass (user, repo) =
+    let list jar token pass (user, repo) all =
       run begin
-        auth jar token pass          >>= fun token ->
-        Issue.all ~token ~user ~repo >>= fun issues ->
+        auth jar token pass                >>= fun token ->
+        Issue.list ~token ~user ~repo ~all >>= fun issues ->
         Issue.pretty issues
       end in
-    Term.(mk list $ jar $ token $ password $ repository)
+    Term.(mk list $ jar $ token $ password $ repository $ all)
 }
 
 (* CLONE *)
@@ -159,13 +163,13 @@ let clone = {
   doc  = "Clone the open issues in a given repository to the local filesystem.";
   man  = [];
   term =
-    let clone jar token pass (user, repo) =
+    let clone jar token pass (user, repo) all =
       run begin
-        auth jar token pass          >>= fun token ->
-        Issue.all ~token ~user ~repo >>= fun issues ->
+        auth jar token pass                >>= fun token ->
+        Issue.list ~token ~user ~repo ~all >>= fun issues ->
         Issue.expand issues
       end in
-    Term.(mk clone $ jar $ token $ password $ repository)
+    Term.(mk clone $ jar $ token $ password $ repository $ all)
 }
 
 let default =
