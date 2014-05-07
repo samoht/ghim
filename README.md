@@ -8,10 +8,15 @@ can then grep, modify, pull/push etc.
 
 ### Build
 
-You will need [ocaml-github](https://github.com/avsm/ocaml-github)
- and [cmdliner](https://github.com/dbuenzli/cmdliner).
+You will need [ocaml-github](https://github.com/avsm/ocaml-github),
+[dolog](https://github.com/UnixJunkie/dolog) and
+ [cmdliner](https://github.com/dbuenzli/cmdliner):
 
-You can then just run:
+```shell
+opam install github dolog cmdliner
+```
+
+To compile the project, you can then just run:
 ```shell
 make
 make install
