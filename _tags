@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: aead14ce0506c7e23249bd27453f0494)
+# DO NOT EDIT (digest: f732c55a5fd3d44a8f86e71263a6c793)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -15,11 +15,9 @@
 "_darcs": not_hygienic
 # Executable ghim
 <lib/main.{native,byte}>: pkg_cmdliner
-<lib/main.{native,byte}>: pkg_git.unix
+<lib/main.{native,byte}>: pkg_dolog
 <lib/main.{native,byte}>: pkg_github.unix
-<lib/main.{native,byte}>: pkg_irminsule.backend.git
 <lib/*.ml{,i}>: pkg_cmdliner
-<lib/*.ml{,i}>: pkg_git.unix
+<lib/*.ml{,i}>: pkg_dolog
 <lib/*.ml{,i}>: pkg_github.unix
-<lib/*.ml{,i}>: pkg_irminsule.backend.git
 # OASIS_STOP

@@ -12,4 +12,4 @@ Executable ghim
   MainIs:             main.ml
   CompiledObject:     best
   Install:            true
-  BuildDepends:       cmdliner, git.unix, github.unix, irminsule.backend.git
+  BuildDepends:       cmdliner, github.unix, dolog
